@@ -19,27 +19,31 @@ class Board extends React.Component {
       />
     )
   }
+  renderSquareArea() {
+    const result = []
+    let aLineSquares = []
+    for (let i = 0; i < this.props.boardSize * this.props.boardSize; i++) {
+      aLineSquares.push(
+        <Square
+          key={i}
+          value={this.props.squares[i]}
+          onClick={() => this.props.onClick(i)}
+        />
+      )
+      if (aLineSquares.length === this.props.boardSize) {
+        result.push(
+          <div key={i} className="board-row">
+            {aLineSquares}
+          </div>
+        )
+        aLineSquares = []
+      }
+    }
+    return result
+  }
 
   render() {
-    return (
-      <div>
-        <div className="board-row">
-          {this.renderSquare(0)}
-          {this.renderSquare(1)}
-          {this.renderSquare(2)}
-        </div>
-        <div className="board-row">
-          {this.renderSquare(3)}
-          {this.renderSquare(4)}
-          {this.renderSquare(5)}
-        </div>
-        <div className="board-row">
-          {this.renderSquare(6)}
-          {this.renderSquare(7)}
-          {this.renderSquare(8)}
-        </div>
-      </div>
-    )
+    return <div>{this.renderSquareArea()}</div>
   }
 }
 
@@ -47,6 +51,7 @@ class Game extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
+      historySort: 'desc',
       history: [
         {
           squares: Array(9).fill(null),
@@ -55,7 +60,11 @@ class Game extends React.Component {
       ],
       xIsNext: true,
       stepNumber: 0,
+      boardSize: 3,
     }
+
+    this.handleChangeBoardSize = this.handleChangeBoardSize.bind(this)
+    this.handleChangeHistorySort = this.handleChangeHistorySort.bind(this)
   }
 
   handleClick(i) {
@@ -85,33 +94,48 @@ class Game extends React.Component {
     })
   }
 
+  handleChangeBoardSize(event) {
+    this.setState({ boardSize: Number(event.target.value) })
+  }
+
+  handleChangeHistorySort(event) {
+    this.setState({ historySort: event.target.value })
+  }
+
   render() {
-    const history = this.state.history
+    const history =  this.state.history 
     const current = history[this.state.stepNumber]
     const winner = calculateWinner(current.squares)
+    const inHistory = this.state.stepNumber < history.length - 1
 
-    const lineNumber = [1, 1, 1, 2, 2, 2, 3, 3, 3]
-    const columnNumber = [1, 2, 3, 1, 2, 3, 1, 2, 3]
-
-    const moves = history.map((step, index) => {
+    let moves = history.map((step, index) => {
       const desc = index ? 'Go to move #' + index : 'Go to game start'
+      const lineNum =
+        (step.i + 1) % this.state.boardSize === 0
+          ? this.state.boardSize
+          : (step.i + 1) % this.state.boardSize
+      const columnNum = Math.ceil((step.i + 1) / this.state.boardSize)
 
       return (
         <li key={index}>
           <button
             style={{
-              fontWeight: this.state.stepNumber === index ? 'bold' : 'inherit',
+              fontWeight:
+                inHistory && this.state.stepNumber === index
+                  ? 'bold'
+                  : 'inherit',
             }}
             onClick={() => this.jumpTo(index)}
           >
             {desc}
-            {step.i !== null
-              ? `行号${lineNumber[step.i]}:列号${columnNumber[step.i]}`
-              : ''}
+            {step.i !== null ? `—— ${lineNum}/${columnNum}` : ''}
           </button>
         </li>
       )
     })
+    if (this.state.historySort === 'asc') {
+      moves = moves.reverse()
+    }
 
     let status
     if (winner) {
@@ -122,15 +146,47 @@ class Game extends React.Component {
 
     return (
       <div className="game">
-        <div className="game-board">
+        <div className="game-info">
+          <div>{status}</div>
+          <div>
+            Board Size（TODO：改成五子棋）：
+            <input
+              type="number"
+              onChange={this.handleChangeBoardSize}
+              value={this.state.boardSize}
+            />
+          </div>
+          <div>
+            History Sort：
+            <label>
+              <input
+                type="radio"
+                name="sort"
+                onChange={this.handleChangeHistorySort}
+                value="desc"
+                checked={this.state.historySort === 'desc'}
+              />{' '}
+              desc
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="sort"
+                onChange={this.handleChangeHistorySort}
+                value="asc"
+                checked={this.state.historySort === 'asc'}
+              />{' '}
+              asc
+            </label>
+          </div>
+          <ol>{moves}</ol>
+        </div>
+        <div className="game-board" style={{ marginLeft: '5px' }}>
           <Board
+            boardSize={this.state.boardSize}
             squares={current.squares}
             onClick={(i) => this.handleClick(i)}
           />
-        </div>
-        <div className="game-info">
-          <div>{status}</div>
-          <ol>{moves}</ol>
         </div>
       </div>
     )
