@@ -146,7 +146,7 @@ class Game extends React.Component {
 
     let status
     if (winner) {
-      status = 'Winner: ' + winner.player
+      status = winner.draw ? 'DRAW' : 'Winner: ' + winner.player
     } else {
       status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O')
     }
@@ -234,6 +234,13 @@ function calculateWinner(squares) {
         player: squares[a],
         group: lines[i],
       }
+    }
+  }
+
+  // 平局
+  if (squares.every(e => e !== null)) {
+    return {
+      draw: true
     }
   }
   return null
