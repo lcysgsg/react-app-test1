@@ -1,10 +1,14 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import './index.css'
+import 'animate.css'
 
 function Square(props) {
   return (
-    <button className="square" onClick={() => props.onClick()}>
+    <button
+      className={props.isActive ? 'square active' : 'square'}
+      onClick={() => props.onClick()}
+    >
       {props.value}
     </button>
   )
@@ -27,6 +31,9 @@ class Board extends React.Component {
         <Square
           key={i}
           value={this.props.squares[i]}
+          isActive={
+            this.props.winnerGroup && this.props.winnerGroup.includes(i)
+          }
           onClick={() => this.props.onClick(i)}
         />
       )
@@ -103,7 +110,7 @@ class Game extends React.Component {
   }
 
   render() {
-    const history =  this.state.history 
+    const history = this.state.history
     const current = history[this.state.stepNumber]
     const winner = calculateWinner(current.squares)
     const inHistory = this.state.stepNumber < history.length - 1
@@ -139,7 +146,7 @@ class Game extends React.Component {
 
     let status
     if (winner) {
-      status = 'Winner: ' + winner
+      status = 'Winner: ' + winner.player
     } else {
       status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O')
     }
@@ -147,7 +154,18 @@ class Game extends React.Component {
     return (
       <div className="game">
         <div className="game-info">
-          <div>{status}</div>
+          <div>
+            <span
+              style={{ display: 'inline-block' }}
+              className={
+                winner
+                  ? 'animate__animated animate__infinite animate__heartBeat font-bold'
+                  : ''
+              }
+            >
+              {status}
+            </span>
+          </div>
           <div>
             Board Size（TODO：改成五子棋）：
             <input
@@ -183,6 +201,7 @@ class Game extends React.Component {
         </div>
         <div className="game-board" style={{ marginLeft: '5px' }}>
           <Board
+            winnerGroup={winner && winner.group}
             boardSize={this.state.boardSize}
             squares={current.squares}
             onClick={(i) => this.handleClick(i)}
@@ -211,7 +230,10 @@ function calculateWinner(squares) {
   for (let i = 0; i < lines.length; i++) {
     const [a, b, c] = lines[i]
     if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-      return squares[a]
+      return {
+        player: squares[a],
+        group: lines[i],
+      }
     }
   }
   return null
