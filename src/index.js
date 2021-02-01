@@ -1,7 +1,47 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
+import useSWR from 'swr'
 import './index.css'
 import 'animate.css'
+
+const fetcher = (...args) => fetch(...args).then((res) => res.json())
+
+function useUser(id) {
+  const { data, error } = useSWR(
+    `http://jsonplaceholder.typicode.com/users/${id}`,
+    fetcher
+  )
+  return {
+    user: data,
+    isLoading: !error && !data,
+    isError: error,
+  }
+}
+
+function UserPage2() {
+  const { user, isLoading } = useUser(1)
+  if (isLoading) return 'Loading'
+  return <span>Welcome back, {user.name}</span>
+}
+
+function UserPage() {
+  return (
+    <h1>
+      <Name /> <Content />
+    </h1>
+  )
+}
+// child components
+function Name() {
+  const { user, isLoading } = useUser(1)
+  if (isLoading) return 'Loading'
+  return <span>Welcome back, {user.name}</span>
+}
+function Content() {
+  const { user, isLoading } = useUser(1)
+  if (isLoading) return 'Loading'
+  return <small>({user.email})</small>
+}
 
 function Square(props) {
   return (
@@ -214,7 +254,14 @@ class Game extends React.Component {
 
 // ========================================
 
-ReactDOM.render(<Game />, document.getElementById('root'))
+ReactDOM.render(
+  <>
+    <UserPage />
+    <UserPage2 />
+    <Game />
+  </>,
+  document.getElementById('root')
+)
 
 function calculateWinner(squares) {
   const lines = [
@@ -238,9 +285,9 @@ function calculateWinner(squares) {
   }
 
   // 平局
-  if (squares.every(e => e !== null)) {
+  if (squares.every((e) => e !== null)) {
     return {
-      draw: true
+      draw: true,
     }
   }
   return null
